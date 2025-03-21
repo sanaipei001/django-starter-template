@@ -3,4 +3,9 @@ crispy-tailwind==1.0.3
 Django==5.1.4
 django-allauth==65.3.1
 django-crispy-forms==2.3
+gunicorn==23.0.0
+packaging==24.2
+pillow==11.1.0
+setuptools==75.8.0
 sqlparse==0.5.3
+wheel==0.45.1
