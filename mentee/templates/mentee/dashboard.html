@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Mentee Dashboard{% endblock %}
+
+{% block content %}
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-700">
+        <div class="bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h1 class="text-3xl font-bold text-center text-indigo-600 mb-6">Mentee Dashboard</h1>
+            
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="{% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} p-3 rounded-lg">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <p class="text-gray-600 mb-4">Welcome, {{ user.email }}!</p>
+            <p class="text-gray-600 mb-4">This is your mentee dashboard. Here you can view your progress and connect with your case manager.</p>
+            
+            <div class="mt-6 text-center">
+                <a href="{% url 'users:profile' %}" class="text-indigo-600 hover:underline">View Profile</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

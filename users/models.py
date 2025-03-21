@@ -1,3 +1,4 @@
+# users/models.py
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
 from django.db.models.signals import post_save
@@ -7,11 +8,10 @@ from django.utils.translation import gettext_lazy as _
 
 from .managers import CustomUserManager
 
-
 class User(AbstractUser, PermissionsMixin):
     class Types(models.TextChoices):
-        STAFF = "STAFF", "Staff"
-        ENDUSER = "ENDUSER", "End User"
+        MENTEE = "MENTEE", "Mentee"
+        CASE_MANAGER = "CASE_MANAGER", "Case Manager"
 
     GENDER_CHOICES = (
         ("male", "Male"),
@@ -19,11 +19,7 @@ class User(AbstractUser, PermissionsMixin):
     )
 
     username = None
-    email = models.EmailField(
-        _("email address"),
-        unique=True,
-        db_index=True
-    )
+    email = models.EmailField(_("email address"), unique=True, db_index=True)
     first_name = models.CharField(_("first name"), max_length=30, blank=True)
     last_name = models.CharField(_("last name"), max_length=30, blank=True)
     gender = models.CharField(
@@ -33,118 +29,112 @@ class User(AbstractUser, PermissionsMixin):
         _("User Type"),
         max_length=50,
         choices=Types.choices,
-        default=Types.STAFF,
+        default=Types.MENTEE,
     )
     is_verified = models.BooleanField(
         default=False,
         help_text=_("Designates whether this user has verified their email.")
     )
-    is_custom_admin = models.BooleanField(
-        default=False,
-        help_text=_("Designates whether this user has dashboard access to the site.")
-    )
     date_joined = models.DateTimeField(default=timezone.now)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
-    class Meta:
-        verbose_name = "User"
-        verbose_name_plural = "Users"
-
     def __str__(self):
         return self.email
 
-
 # Type-Based Query Managers
-class StaffManager(CustomUserManager):
+class MenteeManager(CustomUserManager):
     def get_queryset(self, *args, **kwargs):
-        return super().get_queryset(*args, **kwargs).filter(type=User.Types.STAFF)
+        return super().get_queryset(*args, **kwargs).filter(type=User.Types.MENTEE)
 
-
-class EndUserManager(CustomUserManager):
+class CaseManagerManager(CustomUserManager):
     def get_queryset(self, *args, **kwargs):
-        return super().get_queryset(*args, **kwargs).filter(type=User.Types.ENDUSER)
+        return super().get_queryset(*args, **kwargs).filter(type=User.Types.CASE_MANAGER)
 
-
-# Staff Profile Model
-class StaffUserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="staff_profile")
+# Profile Models
+class MenteeProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="mentee_profile")
+    case_manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_mentees",
+        limit_choices_to={'type': User.Types.CASE_MANAGER}
+    )
+    career_interests = models.TextField(blank=True)
 
     def __str__(self):
-        return self.user.email
+        return f"{self.user.email} - Mentee Profile"
 
-    class Meta:
-        verbose_name = "Staff Profile"
-        verbose_name_plural = "Staff Profiles"
-
-
-# End User Profile Model
-class EndUserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="end_user_profile")
+class CaseManagerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="case_manager_profile")
+    expertise = models.CharField(max_length=200, blank=True)
+    max_mentee_capacity = models.PositiveIntegerField(default=10)
 
     def __str__(self):
-        return self.user.email
+        return f"{self.user.email} - Case Manager Profile"
 
-    class Meta:
-        verbose_name = "End User Profile"
-        verbose_name_plural = "End User Profiles"
-
-
-
-# Staff Proxy Model
-class Staff(User):
-    objects = StaffManager()
+# Proxy Models
+class Mentee(User):
+    objects = MenteeManager()
 
     class Meta:
         proxy = True
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.type = User.Types.STAFF
+            self.type = User.Types.MENTEE
         return super().save(*args, **kwargs)
 
     @property
     def profile(self):
         try:
-            return self.staff_profile
-        except StaffUserProfile.DoesNotExist:
-            return None  # Or handle as needed
+            return self.mentee_profile
+        except MenteeProfile.DoesNotExist:
+            return None
 
+    def assign_case_manager(self, case_manager):
+        if self.profile and case_manager.type == User.Types.CASE_MANAGER:
+            self.profile.case_manager = case_manager
+            self.profile.save()
 
-# EndUser Proxy Model
-class EndUser(User):
-    objects = EndUserManager()
+class CaseManager(User):
+    objects = CaseManagerManager()
 
     class Meta:
         proxy = True
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.type = User.Types.ENDUSER
+            self.type = User.Types.CASE_MANAGER
         return super().save(*args, **kwargs)
 
     @property
     def profile(self):
         try:
-            return self.end_user_profile
-        except EndUserProfile.DoesNotExist:
-            return None  # Or handle as needed
-    
-    
-# Optimized Signal for Creating & Updating Profiles
-# @receiver(post_save, sender=User)
-# def create_or_update_user_profile(sender, instance, created, **kwargs):
-#     """Ensure only the correct profile exists when a user is created or updated."""
-#     if created or instance.type != User.objects.get(pk=instance.pk).type:
-#         if instance.type == User.Types.STAFF:
-#             StaffUserProfile.objects.get_or_create(user=instance)
-#             EndUserProfile.objects.filter(user=instance).delete()
-#         elif instance.type == User.Types.ENDUSER:
-#             EndUserProfile.objects.get_or_create(user=instance)
-#             StaffUserProfile.objects.filter(user=instance).delete()
-            
+            return self.case_manager_profile
+        except CaseManagerProfile.DoesNotExist:
+            return None
 
-import users.signals
+    def get_mentee_count(self):
+        return self.assigned_mentees.count()
+
+    def can_accept_more_mentees(self):
+        return self.profile and self.get_mentee_count() < self.profile.max_mentee_capacity
+
+# Signal to create profiles
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created or instance.type != User.objects.get(pk=instance.pk).type:
+        if instance.type == User.Types.MENTEE:
+            MenteeProfile.objects.get_or_create(user=instance)
+            CaseManagerProfile.objects.filter(user=instance).delete()
+        elif instance.type == User.Types.CASE_MANAGER:
+            CaseManagerProfile.objects.get_or_create(user=instance)
+            MenteeProfile.objects.filter(user=instance).delete()

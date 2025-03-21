@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Case-Manager{% endblock %}
+{% block content %}
+<!-- case_manager/templates/case_manager/session_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessions - Mentorship</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-purple-800 via-violet-900 to-purple-900 min-h-screen">
+    <div class="container mx-auto p-6">
+        <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-xl p-8 max-w-3xl mx-auto">
+            <h1 class="text-3xl font-bold text-purple-700 mb-6">Your Sessions</h1>
+            {% if sessions %}
+                <ul class="space-y-4">
+                    {% for session in sessions %}
+                        <li class="bg-purple-50 p-4 rounded-lg">
+                            <p><span class="font-semibold">Mentee:</span> {{ session.mentee.email }}</p>
+                            <p><span class="font-semibold">Category:</span> {{ session.get_category_display }}</p>
+                            <p><span class="font-semibold">Date:</span> {{ session.date }}</p>
+                            <p><span class="font-semibold">Notes:</span> {{ session.notes|truncatewords:20 }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-600">No sessions scheduled yet. <a href="{% url 'case_manager:session_create' %}" class="text-purple-600 hover:underline">Schedule one now</a>.</p>
+            {% endif %}
+            <a href="{% url 'users:profile' %}" class="mt-6 inline-block bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">Back to Profile</a>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

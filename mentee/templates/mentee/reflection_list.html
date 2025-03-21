@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Mentee{% endblock %}
+{% block content %}
+<!-- mentee/templates/mentee/reflection_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflections - Mentorship</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-purple-800 via-violet-900 to-purple-900 min-h-screen">
+    <div class="container mx-auto p-6">
+        <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-xl p-8 max-w-3xl mx-auto">
+            <h1 class="text-3xl font-bold text-purple-700 mb-6">Your Reflections</h1>
+            {% if reflections %}
+                <ul class="space-y-4">
+                    {% for reflection in reflections %}
+                        <li class="bg-purple-50 p-4 rounded-lg">
+                            <p><span class="font-semibold">Learned:</span> {{ reflection.what_learned|truncatewords:20 }}</p>
+                            <p><span class="font-semibold">Challenges:</span> {{ reflection.challenges|truncatewords:20 }}</p>
+                            <p><span class="font-semibold">Feedback:</span> {{ reflection.feedback|truncatewords:20 }}</p>
+                            <p class="text-sm text-gray-600">Created: {{ reflection.created_at }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-600">No reflections yet. <a href="{% url 'mentee:reflection_create' %}" class="text-purple-600 hover:underline">Create one now</a>.</p>
+            {% endif %}
+            <a href="{% url 'users:profile' %}" class="mt-6 inline-block bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">Back to Profile</a>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

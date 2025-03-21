@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mentorship Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block extrastyle %}{% endblock %}
+</head>
+<body class="bg-gradient-to-r from-purple-800 via-violet-900 to-purple-900 min-h-screen flex flex-col">
+    <!-- Navbar -->
+    {% include 'navbar.html' %}
+
+    <!-- Content -->
+    <main class="flex-grow container mx-auto p-6">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% include 'footer.html' %}
+
+    {% block extrascripts %}{% endblock %}
+</body>
+</html>

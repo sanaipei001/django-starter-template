@@ -1,0 +1,17 @@
+<nav class="bg-gradient-to-r from-purple-900 to-purple-500 p-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+        <!-- Brand -->
+        <a href="{% url 'app:landing_page' %}" class="text-white text-2xl font-bold hover:text-purple-200">
+            Mentorship
+        </a>
+
+        <!-- Links -->
+        <div class="space-x-6">
+            <a href="{% url 'app:landing_page' %}" class="text-white hover:text-purple-200">
+                Home
+            </a>
+            <a href="{% url 'users:login' %}" class="text-white hover:text-purple-200">Login</a>
+            <a href="{% url 'users:register' %}" class="text-white hover:text-purple-200">Register</a>
+        </div>
+    </div>
+</nav>

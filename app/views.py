@@ -1,10 +1,10 @@
+# app/views.py
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+
 
 def landing_page(request):
-    return render(request, "index.html")
+    return render(request, 'app/landing_page.html', {'title': 'Welcome'})
 
-# protected view
-@login_required
+
 def dashboard_landing_page(request):
-    return render(request, "dashboard.html")
+    return render(request, 'app/dashboard_landing_page.html', {'title': 'Dashboard'})

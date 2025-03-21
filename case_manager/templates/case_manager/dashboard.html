@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Case Manager Dashboard{% endblock %}
+
+{% block content %}
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-700">
+        <div class="bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h1 class="text-3xl font-bold text-center text-indigo-600 mb-6">Case Manager Dashboard</h1>
+            
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="{% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} p-3 rounded-lg">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <p class="text-gray-600 mb-4">Welcome, {{ user.email }}!</p>
+            <p class="text-gray-600 mb-4">You are currently managing {{ mentee_count }} mentees.</p>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700">Sessions: {{ session_count }}</span>
+                    <div>
+                        <a href="{% url 'case_manager:session_create' %}" class="text-indigo-600 hover:underline mr-4">Create</a>
+                        <a href="{% url 'case_manager:session_list' %}" class="text-indigo-600 hover:underline">View</a>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700">Reports: {{ report_count }}</span>
+                    <div>
+                        <a href="{% url 'case_manager:report_create' %}" class="text-indigo-600 hover:underline mr-4">Create</a>
+                        <a href="{% url 'case_manager:report_list' %}" class="text-indigo-600 hover:underline">View</a>
+                    </div>
+                </div>
+            </div>
+            
+            {% if mentees %}
+                <h3 class="text-lg font-medium mt-6">Assigned Mentees</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    {% for mentee in mentees %}
+                        <li>
+                            {{ mentee.user.email }}
+                            <a href="{% url 'case_manager:mentee_surveys' mentee.user.id %}" class="text-indigo-600 hover:underline ml-2">View Surveys</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-600 mt-4">No mentees assigned.</p>
+            {% endif %}
+            
+            <div class="mt-6 text-center">
+                <a href="{% url 'users:profile' %}" class="text-indigo-600 hover:underline">View Profile</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

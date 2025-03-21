@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+    <div class="min-h-screen flex items-center justify-center bg-white w-full">
+        <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-xl p-8 max-w-2xl w-full">
+            <div class="flex items-center space-x-4 mb-6">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="w-20 h-20 rounded-full object-cover border-4 border-purple-500">
+                {% else %}
+                    <div class="w-20 h-20 rounded-full bg-purple-200 flex items-center justify-center text-purple-600 font-bold text-2xl">
+                        {{ user.email|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-2xl font-bold text-purple-700 font-poppins">{{ user.email }}</h1>
+                    <p class="text-gray-600">{{ user.type }}</p>
+                </div>
+            </div>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                            <div class="bg-red-100 text-red-700 p-3 rounded-lg">{{ message }}</div>
+                        {% else %}
+                            <div class="bg-green-100 text-green-700 p-3 rounded-lg">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Profile Details -->
+            <div class="space-y-4">
+                <p><span class="font-semibold text-gray-700">First Name:</span> {{ user.first_name|default:'Not provided' }}</p>
+                <p><span class="font-semibold text-gray-700">Last Name:</span> {{ user.last_name|default:'Not provided' }}</p>
+                <p><span class="font-semibold text-gray-700">Phone:</span> {{ user.phone_number|default:'Not provided' }}</p>
+                {% if user.type == 'MENTEE' %}
+                    <p><span class="font-semibold text-gray-700">Case Manager:</span> {{ case_manager.email|default:'None' }}</p>
+                    <p><span class="font-semibold text-gray-700">Career Interests:</span> {{ profile.career_interests|default:'Not specified' }}</p>
+                {% elif user.type == 'CASE_MANAGER' %}
+                    <p><span class="font-semibold text-gray-700">Expertise:</span> {{ profile.expertise|default:'Not specified' }}</p>
+                    <p><span class="font-semibold text-gray-700">Mentee Capacity:</span> {{ mentee_count }} / {{ profile.max_mentee_capacity }}</p>
+                    {% if mentees %}
+                        <h3 class="text-lg font-semibold text-purple-700 mt-6 font-poppins">Assigned Mentees</h3>
+                        <ul class="space-y-2">
+                            {% for mentee in mentees %}
+                                <li class="bg-purple-50 p-3 rounded-lg flex justify-between items-center">
+                                    <span>{{ mentee.email }}</span>
+                                    {% if user.is_staff %}
+                                        <a href="{% url 'users:assign_case_manager' mentee.id %}" class="text-purple-600 hover:underline text-sm">Reassign</a>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-gray-600">No mentees assigned yet.</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-6 flex space-x-4">
+                <button onclick="document.getElementById('edit-profile-form').classList.toggle('hidden')" class="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Edit Profile
+                </button>
+                <a href="{% url 'users:password_change' %}" class="inline-block bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300">
+                    Change Password
+                </a>
+                <a href="{% url 'users:logout' %}" class="inline-block bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition duration-300">
+                    Logout
+                </a>
+            </div>
+
+            <!-- Edit Profile Form (Hidden by Default) -->
+            <div id="edit-profile-form" class="hidden mt-6">
+                <form method="post" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    <!-- User Fields -->
+                    <div>
+                        <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                        {{ user_form.first_name }}
+                    </div>
+                    <div>
+                        <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        {{ user_form.last_name }}
+                    </div>
+                    <div>
+                        <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        {{ user_form.phone_number }}
+                    </div>
+                    <div>
+                        <label for="id_profile_picture" class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                        {{ user_form.profile_picture }}
+                        <!-- Image Preview -->
+                        <div id="image-preview" class="mt-2">
+                            {% if user.profile_picture %}
+                                <img id="preview-img" src="{{ user.profile_picture.url }}" alt="Profile Picture Preview" class="w-20 h-20 rounded-full object-cover border-2 border-gray-300">
+                            {% else %}
+                                <p class="text-gray-600">No image selected</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Profile-Specific Fields -->
+                    {% if user.type == 'MENTEE' %}
+                        <div>
+                            <label for="id_career_interests" class="block text-sm font-medium text-gray-700">Career Interests</label>
+                            {{ profile_form.career_interests }}
+                        </div>
+                    {% elif user.type == 'CASE_MANAGER' %}
+                        <div>
+                            <label for="id_expertise" class="block text-sm font-medium text-gray-700">Expertise</label>
+                            {{ profile_form.expertise }}
+                        </div>
+                    {% endif %}
+                    <!-- Form Errors -->
+                    {% if user_form.errors or profile_form.errors %}
+                        <div class="bg-red-100 text-red-700 p-3 rounded-lg">
+                            <p>Please correct the following errors:</p>
+                            <ul>
+                                {% for field in user_form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for field in profile_form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    <!-- Submit and Cancel Buttons -->
+                    <div class="flex space-x-4">
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                            Save Changes
+                        </button>
+                        <button type="button" onclick="document.getElementById('edit-profile-form').classList.add('hidden')" class="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-300">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Image Preview -->
+    <script>
+        document.getElementById('id_profile_picture').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('preview-img');
+            const previewContainer = document.getElementById('image-preview');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (!preview) {
+                        const img = document.createElement('img');
+                        img.id = 'preview-img';
+                        img.className = 'w-20 h-20 rounded-full object-cover border-2 border-gray-300';
+                        img.src = e.target.result;
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(img);
+                    } else {
+                        preview.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.innerHTML = '<p class="text-gray-600">No image selected</p>';
+            }
+        });
+    </script>
+{% endblock %}
